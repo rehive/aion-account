@@ -27,6 +27,10 @@ from eth_utils.curried import (
     to_bytes,
     to_int,
 )
+from eth_utils import (
+    blake2b
+)
+
 from hexbytes import (
     HexBytes,
 )
@@ -81,7 +85,7 @@ class Account(object):
             # but without the private key argument
         '''
         extra_key_bytes = text_if_str(to_bytes, extra_entropy)
-        key_bytes = keccak(os.urandom(32) + extra_key_bytes)
+        key_bytes = blake2b(os.urandom(32) + extra_key_bytes)
         return self.privateKeyToAccount(key_bytes)
 
     @staticmethod
