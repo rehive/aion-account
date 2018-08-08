@@ -20,7 +20,9 @@ V_OFFSET = 27
 
 def sign_transaction_dict(eth_key, transaction_dict):
     # generate RLP-serializable transaction, with defaults filled
+    print('DOING THE THING')
     unsigned_transaction = serializable_unsigned_transaction_from_dict(transaction_dict)
+    print(unsigned_transaction)
 
     transaction_hash = unsigned_transaction.hash()
 
@@ -31,11 +33,15 @@ def sign_transaction_dict(eth_key, transaction_dict):
         chain_id = unsigned_transaction.v
 
     # sign with private key
-    (v, r, s) = sign_transaction_hash(eth_key, transaction_hash, chain_id)
-
+    (v, r, s, sign_bytes) = sign_transaction_hash(eth_key, transaction_hash, chain_id)
+    print(v)
+    print(r)
+    print(s)
+    print('sig bytes')
+    print(sign_bytes)
     # serialize transaction with rlp
-    encoded_transaction = encode_transaction(unsigned_transaction, vrs=(v, r, s))
-
+    encoded_transaction = encode_transaction(unsigned_transaction, vrs=(v, r, s, sign_bytes))
+    print(encoded_transaction)
     return (v, r, s, encoded_transaction)
 
 
@@ -117,8 +123,9 @@ def to_eth_v(v_raw, chain_id=None):
 def sign_transaction_hash(account, transaction_hash, chain_id):
     signature = account.sign_msg_hash(transaction_hash)
     (v_raw, r, s) = signature.vrs
+    sig_bytes = signature.signature_bytes
     v = to_eth_v(v_raw, chain_id)
-    return (v, r, s)
+    return (v, r, s, sig_bytes)
 
 
 def _pad_to_eth_word(bytes_val):

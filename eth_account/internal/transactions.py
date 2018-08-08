@@ -1,4 +1,5 @@
 import itertools
+import time
 
 from cytoolz import (
     curry,
@@ -26,6 +27,7 @@ from eth_utils.curried import (
 import rlp
 from rlp.sedes import (
     Binary,
+    BigEndianInt,
     big_endian_int,
     binary,
 )
@@ -48,9 +50,12 @@ def serializable_unsigned_transaction_from_dict(transaction_dict):
 
 
 def encode_transaction(unsigned_transaction, vrs):
-    (v, r, s) = vrs
+    (v, r, s, sig_bytes) = vrs
+    print(unsigned_transaction)
+    print(unsigned_transaction.as_dict())
     chain_naive_transaction = dissoc(unsigned_transaction.as_dict(), 'v', 'r', 's')
-    signed_transaction = Transaction(v=v, r=r, s=s, **chain_naive_transaction)
+    signed_transaction = Transaction(s=sig_bytes, **chain_naive_transaction)
+    print(signed_transaction.as_dict())
     return rlp.encode(signed_transaction)
 
 
@@ -81,12 +86,14 @@ TRANSACTION_DEFAULTS = {
     'value': 0,
     'data': b'',
     'chainId': None,
+    'tx_type': 0,
+    'timestamp':  int(time.time())
 }
 
 TRANSACTION_FORMATTERS = {
     'nonce': hexstr_if_str(to_int),
-    'gasPrice': hexstr_if_str(to_int),
     'gas': hexstr_if_str(to_int),
+    'gasPrice': hexstr_if_str(to_int),
     'to': apply_one_of_formatters((
         (is_string, hexstr_if_str(to_bytes)),
         (is_bytes, identity),
@@ -116,6 +123,8 @@ ALLOWED_TRANSACTION_KEYS = {
     'to',
     'value',
     'data',
+    'tx_type',
+    'timestamp',
     'chainId',  # set chainId to None if you want a transaction that can be replayed across networks
 }
 
@@ -156,19 +165,19 @@ def fill_transaction_defaults(transaction):
 
 UNSIGNED_TRANSACTION_FIELDS = (
     ('nonce', big_endian_int),
-    ('gasPrice', big_endian_int),
-    ('gas', big_endian_int),
-    ('to', Binary.fixed_length(20, allow_empty=True)),
+    ('to', Binary.fixed_length(32, allow_empty=True)),
     ('value', big_endian_int),
     ('data', binary),
+    ('timestamp', big_endian_int),
+    ('gas', big_endian_int),
+    ('gasPrice', big_endian_int),
+    ('tx_type', big_endian_int),
 )
 
 
 class Transaction(HashableRLP):
     fields = UNSIGNED_TRANSACTION_FIELDS + (
-        ('v', big_endian_int),
-        ('r', big_endian_int),
-        ('s', big_endian_int),
+        ('s', binary),
     )
 
 
