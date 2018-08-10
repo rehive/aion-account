@@ -33,14 +33,15 @@ def sign_transaction_dict(eth_key, transaction_dict):
         chain_id = unsigned_transaction.v
 
     # sign with private key
-    (v, r, s, sign_bytes) = sign_transaction_hash(eth_key, transaction_hash, chain_id)
-    print(v)
-    print(r)
-    print(s)
+    (v, r, s, sign_bytes, total_sig) = sign_transaction_hash(eth_key, transaction_hash, chain_id)
+    pub_key = bytes(eth_key.public_key.to_bytes())
+    print('PUBLIC KEY')
+    print(pub_key)
     print('sig bytes')
     print(sign_bytes)
     # serialize transaction with rlp
-    encoded_transaction = encode_transaction(unsigned_transaction, vrs=(v, r, s, sign_bytes))
+    sign_bytes = pub_key + sign_bytes 
+    encoded_transaction = encode_transaction(unsigned_transaction, vrs=(v, r, s, sign_bytes, total_sig))
     print(encoded_transaction)
     return (v, r, s, encoded_transaction)
 
@@ -124,8 +125,9 @@ def sign_transaction_hash(account, transaction_hash, chain_id):
     signature = account.sign_msg_hash(transaction_hash)
     (v_raw, r, s) = signature.vrs
     sig_bytes = signature.signature_bytes
+    sig_raw = signature.total_sig
     v = to_eth_v(v_raw, chain_id)
-    return (v, r, s, sig_bytes)
+    return (v, r, s, sig_bytes, sig_raw)
 
 
 def _pad_to_eth_word(bytes_val):

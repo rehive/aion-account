@@ -50,10 +50,13 @@ def serializable_unsigned_transaction_from_dict(transaction_dict):
 
 
 def encode_transaction(unsigned_transaction, vrs):
-    (v, r, s, sig_bytes) = vrs
+    (v, r, s, sig_bytes, total_sig) = vrs
     print(unsigned_transaction)
     print(unsigned_transaction.as_dict())
     chain_naive_transaction = dissoc(unsigned_transaction.as_dict(), 'v', 'r', 's')
+    print('THE SIG BYTES')
+    print(len(sig_bytes))
+    print(sig_bytes[1:])
     signed_transaction = Transaction(s=sig_bytes, **chain_naive_transaction)
     print(signed_transaction.as_dict())
     return rlp.encode(signed_transaction)
@@ -85,15 +88,19 @@ TRANSACTION_DEFAULTS = {
     'to': b'',
     'value': 0,
     'data': b'',
-    'chainId': None,
-    'tx_type': 0,
-    'timestamp':  int(time.time())
+    'tx_type': b'0x01',
+    'timestamp':  int(time.time()),
+    'gasPrice': b'\x00\x00\x00%@\xbe@\x00'
 }
 
 TRANSACTION_FORMATTERS = {
     'nonce': hexstr_if_str(to_int),
     'gas': hexstr_if_str(to_int),
-    'gasPrice': hexstr_if_str(to_int),
+    'gasPrice': apply_one_of_formatters((
+        (is_string, hexstr_if_str(to_bytes)),
+        (is_bytes, identity),
+        (is_none, lambda val: b''),
+    )),
     'to': apply_one_of_formatters((
         (is_string, hexstr_if_str(to_bytes)),
         (is_bytes, identity),
@@ -103,7 +110,11 @@ TRANSACTION_FORMATTERS = {
     'data': hexstr_if_str(to_bytes),
     'v': hexstr_if_str(to_int),
     'r': hexstr_if_str(to_int),
-    's': hexstr_if_str(to_int),
+    's': apply_one_of_formatters((
+        (is_string, hexstr_if_str(to_bytes)),
+        (is_bytes, identity),
+        (is_none, lambda val: b''),
+    )),
 }
 
 TRANSACTION_VALID_VALUES = {
@@ -170,14 +181,15 @@ UNSIGNED_TRANSACTION_FIELDS = (
     ('data', binary),
     ('timestamp', big_endian_int),
     ('gas', big_endian_int),
-    ('gasPrice', big_endian_int),
-    ('tx_type', big_endian_int),
+    ('gasPrice', binary),
+    ('tx_type', binary),
 )
 
 
 class Transaction(HashableRLP):
     fields = UNSIGNED_TRANSACTION_FIELDS + (
-        ('s', binary),
+        ('s',  Binary.fixed_length(96, allow_empty=True)),
+        # ('sv', Binary.fixed_length(64, allow_empty=True)),
     )
 
 
