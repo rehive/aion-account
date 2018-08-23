@@ -31,6 +31,7 @@ from rlp.sedes import (
     big_endian_int,
     binary,
 )
+import hexbytes
 
 
 def serializable_unsigned_transaction_from_dict(transaction_dict):
@@ -84,29 +85,33 @@ def is_none(val):
     return val is None
 
 
+def int_to_hex(val):
+    return bytes(hex(val), encoding='utf-8')
+
+
 TRANSACTION_DEFAULTS = {
     'to': b'',
-    'value': 0,
+    'value': b'R\x08',
     'data': b'',
-    'tx_type': b'0x01',
-    'timestamp':  int(time.time()),
-    'gasPrice': b'\x00\x00\x00%@\xbe@\x00'
+    'tx_type': b'\x01',
+    'timestamp': bytes(hexbytes.HexBytes(int(time.time()*1000.0))),
+    'gasPrice': b'R\x08'
 }
 
 TRANSACTION_FORMATTERS = {
-    'nonce': hexstr_if_str(to_int),
-    'gas': hexstr_if_str(to_int),
-    'gasPrice': apply_one_of_formatters((
-        (is_string, hexstr_if_str(to_bytes)),
-        (is_bytes, identity),
-        (is_none, lambda val: b''),
-    )),
+    # 'nonce': hexstr_if_str(to_int),
+    # 'gas': hexstr_if_str(to_int),
+    # 'gasPrice': apply_one_of_formatters((
+    #     (is_string, hexstr_if_str(to_bytes)),
+    #     (is_bytes, identity),
+    #     (is_none, lambda val: b''),
+    # )),
     'to': apply_one_of_formatters((
         (is_string, hexstr_if_str(to_bytes)),
         (is_bytes, identity),
         (is_none, lambda val: b''),
     )),
-    'value': hexstr_if_str(to_int),
+    # 'value': hexstr_if_str(to_int),
     'data': hexstr_if_str(to_bytes),
     'v': hexstr_if_str(to_int),
     'r': hexstr_if_str(to_int),
@@ -118,9 +123,9 @@ TRANSACTION_FORMATTERS = {
 }
 
 TRANSACTION_VALID_VALUES = {
-    'nonce': is_int_or_prefixed_hexstr,
+    'nonce': lambda val: isinstance(val, (int, str, bytes, bytearray)),
     'gasPrice': is_int_or_prefixed_hexstr,
-    'gas': is_int_or_prefixed_hexstr,
+    'gas': lambda val: isinstance(val, (int, str, bytes, bytearray)),
     'to': is_empty_or_checksum_address,
     'value': is_int_or_prefixed_hexstr,
     'data': lambda val: isinstance(val, (int, str, bytes, bytearray)),
@@ -175,12 +180,12 @@ def fill_transaction_defaults(transaction):
 
 
 UNSIGNED_TRANSACTION_FIELDS = (
-    ('nonce', big_endian_int),
+    ('nonce', binary),
     ('to', Binary.fixed_length(32, allow_empty=True)),
-    ('value', big_endian_int),
+    ('value', binary),
     ('data', binary),
-    ('timestamp', big_endian_int),
-    ('gas', big_endian_int),
+    ('timestamp', binary),
+    ('gas', binary),
     ('gasPrice', binary),
     ('tx_type', binary),
 )
