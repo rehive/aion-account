@@ -52,14 +52,8 @@ def serializable_unsigned_transaction_from_dict(transaction_dict):
 
 def encode_transaction(unsigned_transaction, vrs):
     (v, r, s, sig_bytes, total_sig) = vrs
-    print(unsigned_transaction)
-    print(unsigned_transaction.as_dict())
     chain_naive_transaction = dissoc(unsigned_transaction.as_dict(), 'v', 'r', 's')
-    print('THE SIG BYTES')
-    print(len(sig_bytes))
-    print(sig_bytes[1:])
     signed_transaction = Transaction(s=sig_bytes, **chain_naive_transaction)
-    print(signed_transaction.as_dict())
     return rlp.encode(signed_transaction)
 
 

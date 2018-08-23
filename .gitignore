@@ -54,6 +54,7 @@ chains
 
 # tox/pytest cache
 .cache
+.pytest_cache
 
 # Test output logs
 logs
@@ -83,9 +84,6 @@ logs
 # Mongo Explorer plugin:
 .idea/mongoSettings.xml
 
-# VIM temp files
-*.swp
-
 ## File-based project format:
 *.iws
 
@@ -106,3 +104,5 @@ crashlytics.properties
 crashlytics-build.properties
 fabric.properties
 
+# virtualenv default location
+venv*

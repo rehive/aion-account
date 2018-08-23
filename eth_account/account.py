@@ -86,7 +86,6 @@ class Account(object):
         '''
         extra_key_bytes = text_if_str(to_bytes, extra_entropy)
         key_bytes = blake2b(os.urandom(32) + extra_key_bytes)
-        print(key_bytes)
         return self.privateKeyToAccount(key_bytes)
 
     @staticmethod
@@ -431,7 +430,6 @@ class Account(object):
         else:
             sanitized_transaction = transaction_dict
 
-        print(sanitized_transaction)
         # sign transaction
         (
             v,
@@ -439,7 +437,6 @@ class Account(object):
             s,
             rlp_encoded,
         ) = sign_transaction_dict(account._key_obj, sanitized_transaction)
-        print(rlp_encoded)
         transaction_hash = blake2b(rlp_encoded, digest_size=32)
 
         return AttributeDict({
