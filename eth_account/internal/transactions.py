@@ -50,9 +50,8 @@ def serializable_unsigned_transaction_from_dict(transaction_dict):
     return serializer.from_dict(filled_transaction)
 
 
-def encode_transaction(unsigned_transaction, vrs):
-    (v, r, s, sig_bytes, total_sig) = vrs
-    chain_naive_transaction = dissoc(unsigned_transaction.as_dict(), 'v', 'r', 's')
+def encode_transaction(unsigned_transaction, sig_bytes):
+    chain_naive_transaction = dissoc(unsigned_transaction.as_dict())
     signed_transaction = Transaction(s=sig_bytes, **chain_naive_transaction)
     return rlp.encode(signed_transaction)
 
@@ -85,7 +84,7 @@ def int_to_hex(val):
 
 TRANSACTION_DEFAULTS = {
     'to': b'',
-    'value': b'R\x08',
+    'value': 0,
     'data': b'',
     'tx_type': b'\x01',
     'timestamp': bytes(hexbytes.HexBytes(int(time.time()*1000.0))),
@@ -93,7 +92,7 @@ TRANSACTION_DEFAULTS = {
 }
 
 TRANSACTION_FORMATTERS = {
-    # 'nonce': hexstr_if_str(to_int),
+    'nonce': hexstr_if_str(to_int),
     # 'gas': hexstr_if_str(to_int),
     # 'gasPrice': apply_one_of_formatters((
     #     (is_string, hexstr_if_str(to_bytes)),
@@ -105,7 +104,7 @@ TRANSACTION_FORMATTERS = {
         (is_bytes, identity),
         (is_none, lambda val: b''),
     )),
-    # 'value': hexstr_if_str(to_int),
+    'value': hexstr_if_str(to_int),
     'data': hexstr_if_str(to_bytes),
     'v': hexstr_if_str(to_int),
     'r': hexstr_if_str(to_int),
@@ -174,9 +173,9 @@ def fill_transaction_defaults(transaction):
 
 
 UNSIGNED_TRANSACTION_FIELDS = (
-    ('nonce', binary),
+    ('nonce', big_endian_int),
     ('to', Binary.fixed_length(32, allow_empty=True)),
-    ('value', binary),
+    ('value', big_endian_int),
     ('data', binary),
     ('timestamp', binary),
     ('gas', binary),
@@ -188,7 +187,6 @@ UNSIGNED_TRANSACTION_FIELDS = (
 class Transaction(HashableRLP):
     fields = UNSIGNED_TRANSACTION_FIELDS + (
         ('s',  Binary.fixed_length(96, allow_empty=True)),
-        # ('sv', Binary.fixed_length(64, allow_empty=True)),
     )
 
 
